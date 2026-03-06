@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TANK FORCE 1990 - Battle City Reborn</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFD700;
+    --orange: #FF6B00;
+    --red: #FF2D2D;
+    --green: #00FF41;
+    --blue: #00BFFF;
+    --purple: #C724FF;
+    --bg: #0a0a0a;
+    --tile: #1a1a1a;
+    --brick: #8B3A00;
+    --brick2: #C05A00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--yellow);
+    font-family: 'Press Start 2P', monospace;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 16px; height: 16px;
+    background: var(--yellow);
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    image-rendering: pixelated;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transition: transform 0.1s;
+  }
+
+  /* Scanlines overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ===== PIXEL GRID BACKGROUND ===== */
+  .pixel-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,215,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,215,0,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    z-index: 0;
+  }
+
+  /* ===== HEADER / HERO ===== */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 60px 20px 40px;
+    overflow: hidden;
+  }
+
+  .insert-coin {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--green);
+    letter-spacing: 4px;
+    animation: blink 1s step-end infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .game-title {
+    font-size: clamp(2rem, 6vw, 4rem);
+    line-height: 1.4;
+    text-shadow:
+      4px 4px 0 var(--orange),
+      8px 8px 0 var(--red),
+      0 0 40px rgba(255,215,0,0.5);
+    animation: titlePulse 3s ease-in-out infinite;
+    margin-bottom: 10px;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { text-shadow: 4px 4px 0 var(--orange), 8px 8px 0 var(--red), 0 0 40px rgba(255,215,0,0.5); }
+    50% { text-shadow: 4px 4px 0 var(--orange), 8px 8px 0 var(--red), 0 0 80px rgba(255,215,0,0.9); }
+  }
+
+  .subtitle {
+    font-size: clamp(0.5rem, 2vw, 0.8rem);
+    color: var(--orange);
+    letter-spacing: 3px;
+    margin-bottom: 40px;
+  }
+
+  /* ===== PIXEL TANK SPRITE ===== */
+  .tank-hero {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin: 40px 0;
+    flex-wrap: wrap;
+  }
+
+  .tank-sprite {
+    position: relative;
+    animation: tankFloat 2s ease-in-out infinite;
+  }
+
+  .tank-sprite.enemy {
+    animation: tankFloat 2s ease-in-out infinite reverse;
+    filter: hue-rotate(120deg);
+  }
+
+  @keyframes tankFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* CSS Pixel Tank */
+  .pixel-tank {
+    image-rendering: pixelated;
+    width: 80px;
+    height: 80px;
+    position: relative;
+  }
+
+  .tank-body {
+    width: 48px;
+    height: 40px;
+    background: var(--yellow);
+    position: absolute;
+    left: 16px;
+    top: 20px;
+    box-shadow: inset -4px -4px 0 rgba(0,0,0,0.4);
+  }
+
+  .tank-body::before {
+    content: '';
+    width: 16px; height: 16px;
+    background: var(--orange);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .tank-barrel {
+    width: 8px; height: 28px;
+    background: var(--yellow);
+    position: absolute;
+    left: 50%; top: -8px;
+    transform: translateX(-50%);
+    box-shadow: 2px 0 0 rgba(0,0,0,0.3);
+  }
+
+  .tank-track-l, .tank-track-r {
+    width: 12px; height: 48px;
+    background: repeating-linear-gradient(
+      0deg, #333 0px, #333 6px, #555 6px, #555 12px
+    );
+    position: absolute;
+    top: 16px;
+  }
+  .tank-track-l { left: 4px; }
+  .tank-track-r { right: 4px; }
+
+  .tank-wheel {
+    width: 10px; height: 10px;
+    background: #888;
+    border-radius: 50%;
+    position: absolute;
+  }
+
+  /* ===== BULLET ===== */
+  .bullet {
+    width: 6px; height: 12px;
+    background: var(--yellow);
+    position: absolute;
+    animation: shoot 0.5s linear infinite;
+  }
+
+  @keyframes shoot {
+    0% { top: -20px; opacity: 1; }
+    100% { top: -80px; opacity: 0; }
+  }
+
+  /* ===== BRICK WALL DIVIDER ===== */
+  .brick-wall {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 10px 0;
+    margin: 20px 0;
+    position: relative;
+    z-index: 5;
+  }
+
+  .brick {
+    width: 32px; height: 16px;
+    background: linear-gradient(135deg, var(--brick2), var(--brick));
+    border: 1px solid #5a2000;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.15);
+    animation: shimmer 3s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.1s);
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background: linear-gradient(135deg, var(--brick2), var(--brick)); }
+    50% { background: linear-gradient(135deg, #E06000, #6B2800); }
+  }
+
+  /* ===== SCORE BOARD ===== */
+  .scoreboard {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 900px;
+  }
+
+  .score-item {
+    text-align: center;
+    padding: 20px;
+    border: 3px solid var(--yellow);
+    background: rgba(255,215,0,0.05);
+    min-width: 160px;
+    position: relative;
+    animation: borderGlow 2s ease-in-out infinite;
+    animation-delay: calc(var(--d) * 0.5s);
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { border-color: var(--yellow); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+    50% { border-color: var(--orange); box-shadow: 0 0 20px rgba(255,107,0,0.6); }
+  }
+
+  .score-item::before, .score-item::after {
+    content: '★';
+    position: absolute;
+    top: -14px;
+    font-size: 1.2rem;
+    background: var(--bg);
+    padding: 0 4px;
+  }
+  .score-item::before { left: 10px; }
+  .score-item::after { right: 10px; }
+
+  .score-num {
+    font-size: 2rem;
+    color: var(--green);
+    display: block;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  .score-label {
+    font-size: 0.45rem;
+    color: var(--orange);
+    letter-spacing: 2px;
+  }
+
+  /* ===== FEATURES GRID ===== */
+  .section-title {
+    font-size: clamp(0.7rem, 2.5vw, 1.2rem);
+    text-align: center;
+    color: var(--blue);
+    margin: 50px 0 30px;
+    position: relative;
+    z-index: 10;
+    text-shadow: 0 0 20px var(--blue);
+  }
+
+  .section-title::before, .section-title::after {
+    content: '══ ';
+    color: var(--yellow);
+  }
+  .section-title::after { content: ' ══'; }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .feature-card {
+    padding: 24px 20px;
+    border: 2px solid;
+    background: rgba(0,0,0,0.6);
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+  }
+
+  .feature-card:hover {
+    transform: translate(-4px, -4px);
+  }
+
+  .feature-card:nth-child(1) { border-color: var(--red); }
+  .feature-card:nth-child(1):hover { box-shadow: 6px 6px 0 var(--red); }
+  .feature-card:nth-child(2) { border-color: var(--blue); }
+  .feature-card:nth-child(2):hover { box-shadow: 6px 6px 0 var(--blue); }
+  .feature-card:nth-child(3) { border-color: var(--green); }
+  .feature-card:nth-child(3):hover { box-shadow: 6px 6px 0 var(--green); }
+  .feature-card:nth-child(4) { border-color: var(--purple); }
+  .feature-card:nth-child(4):hover { box-shadow: 6px 6px 0 var(--purple); }
+
+  .feature-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 16px;
+    image-rendering: pixelated;
+  }
+
+  .feature-title {
+    font-size: 0.55rem;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .feature-desc {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: #aaa;
+    line-height: 1.5;
+  }
+
+  /* ===== PIXEL MAP ===== */
+  .map-section {
+    position: relative;
+    z-index: 10;
+    max-width: 600px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .pixel-map {
+    display: inline-grid;
+    grid-template-columns: repeat(15, 24px);
+    grid-template-rows: repeat(10, 24px);
+    gap: 2px;
+    margin: 20px auto;
+    border: 3px solid var(--yellow);
+    padding: 10px;
+    background: rgba(0,0,0,0.8);
+  }
+
+  .cell {
+    width: 24px; height: 24px;
+    image-rendering: pixelated;
+  }
+  .cell.empty { background: #111; }
+  .cell.brick { background: var(--brick); box-shadow: inset 1px 1px 0 var(--brick2); }
+  .cell.steel { background: #888; box-shadow: inset 1px 1px 0 #ccc, inset -1px -1px 0 #444; }
+  .cell.water { background: #003366; animation: waterAnim 1s step-end infinite; }
+  .cell.tree { background: #004400; }
+  .cell.base { background: var(--yellow); animation: basePulse 0.5s step-end infinite; }
+
+  @keyframes waterAnim {
+    0%, 100% { background: #003366; }
+    50% { background: #0055aa; }
+  }
+  @keyframes basePulse {
+    0%, 100% { background: var(--yellow); }
+    50% { background: var(--orange); }
+  }
+
+  /* ===== LEADERBOARD ===== */
+  .leaderboard {
+    max-width: 600px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .lb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    margin-bottom: 6px;
+    border: 2px solid transparent;
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    transition: all 0.2s;
+    animation: slideIn 0.5s ease both;
+    animation-delay: calc(var(--r) * 0.1s);
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .lb-row:nth-child(1) { background: rgba(255,215,0,0.15); border-color: var(--yellow); }
+  .lb-row:nth-child(2) { background: rgba(192,192,192,0.1); border-color: #888; }
+  .lb-row:nth-child(3) { background: rgba(205,127,50,0.1); border-color: #cd7f32; }
+  .lb-row:nth-child(n+4) { background: rgba(255,255,255,0.03); border-color: #333; }
+
+  .lb-rank { color: var(--yellow); min-width: 40px; }
+  .lb-name { flex: 1; padding: 0 20px; color: var(--green); }
+  .lb-score { color: var(--orange); }
+
+  /* ===== CTA BUTTONS ===== */
+  .cta-section {
+    text-align: center;
+    padding: 40px 20px 80px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .btn-play {
+    display: inline-block;
+    padding: 20px 48px;
+    background: var(--yellow);
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.7rem, 2vw, 1rem);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 6px 6px 0 var(--orange), 12px 12px 0 var(--red);
+    transition: all 0.1s;
+    animation: ctaPulse 1.5s ease-in-out infinite;
+    margin: 10px;
+  }
+
+  @keyframes ctaPulse {
+    0%, 100% { box-shadow: 6px 6px 0 var(--orange), 12px 12px 0 var(--red); }
+    50% { box-shadow: 8px 8px 0 var(--orange), 16px 16px 0 var(--red), 0 0 30px rgba(255,215,0,0.5); }
+  }
+
+  .btn-play:active {
+    transform: translate(6px, 6px);
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: 20px 48px;
+    background: transparent;
+    color: var(--yellow);
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.7rem, 2vw, 1rem);
+    text-decoration: none;
+    border: 3px solid var(--yellow);
+    cursor: pointer;
+    position: relative;
+    box-shadow: 6px 6px 0 #555;
+    transition: all 0.1s;
+    margin: 10px;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,215,0,0.1);
+    box-shadow: 8px 8px 0 var(--yellow);
+  }
+
+  /* ===== EXPLOSION PARTICLES ===== */
+  .explosion {
+    position: fixed;
+    pointer-events: none;
+    z-index: 500;
+  }
+
+  .spark {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--yellow);
+    animation: explode 0.6s ease-out both;
+  }
+
+  @keyframes explode {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 30px 20px;
+    border-top: 3px solid #333;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: #555;
+  }
+
+  footer span { color: var(--red); }
+
+  /* ===== MOVING TANKS ===== */
+  .moving-tank {
+    position: fixed;
+    bottom: 20px;
+    font-size: 1.5rem;
+    animation: tankMove 8s linear infinite;
+    z-index: 5;
+    opacity: 0.3;
+    filter: hue-rotate(var(--hue));
+  }
+
+  @keyframes tankMove {
+    0% { left: -60px; }
+    100% { left: 110vw; }
+  }
+
+  /* POWER-UP BADGES */
+  .powerups {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 30px auto;
+    max-width: 700px;
+    position: relative;
+    z-index: 10;
+    padding: 0 20px;
+  }
+
+  .powerup {
+    width: 64px; height: 64px;
+    border: 3px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    position: relative;
+    animation: powerupBlink 1s step-end infinite;
+    animation-delay: calc(var(--p) * 0.2s);
+  }
+
+  .powerup:nth-child(1) { border-color: var(--red); }
+  .powerup:nth-child(2) { border-color: var(--blue); }
+  .powerup:nth-child(3) { border-color: var(--green); }
+  .powerup:nth-child(4) { border-color: var(--purple); }
+  .powerup:nth-child(5) { border-color: var(--yellow); }
+
+  @keyframes powerupBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.95); }
+  }
+
+  .powerup-label {
+    font-size: 0.3rem;
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: #888;
+  }
+
+  /* STAGE COUNTER */
+  .stage-display {
+    text-align: center;
+    position: relative;
+    z-index: 10;
+    margin: 20px 0;
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--green);
+    letter-spacing: 6px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .scoreboard { gap: 16px; }
+    .score-item { min-width: 120px; padding: 14px; }
+    .pixel-map { grid-template-columns: repeat(15, 18px); grid-template-rows: repeat(10, 18px); }
+    .cell { width: 18px; height: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pixel-bg"></div>
+<div class="cursor" id="cursor"></div>
+
+<!-- Moving tanks in background -->
+<div class="moving-tank" style="--hue:0deg; animation-delay:0s;">🚗</div>
+<div class="moving-tank" style="--hue:120deg; animation-delay:3s; bottom:60px;">🚗</div>
+<div class="moving-tank" style="--hue:240deg; animation-delay:5s; bottom:100px;">🚗</div>
+
+<!-- HEADER -->
+<header>
+  <div class="insert-coin">▶ INSERT COIN TO PLAY ◀</div>
+  <h1 class="game-title">TANK<br>FORCE</h1>
+  <div class="subtitle">★ 1990 BATTLE EDITION ★ REBORN ★</div>
+
+  <!-- Pixel Tanks -->
+  <div class="tank-hero">
+    <div class="tank-sprite">
+      <div class="pixel-tank">
+        <div class="tank-track-l"></div>
+        <div class="tank-track-r"></div>
+        <div class="tank-body">
+          <div class="tank-barrel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VS text -->
+    <div style="font-size:clamp(1rem,4vw,2rem); color:var(--red); align-self:center; text-shadow: 3px 3px 0 #800;">VS</div>
+
+    <div class="tank-sprite enemy">
+      <div class="pixel-tank">
+        <div class="tank-track-l"></div>
+        <div class="tank-track-r"></div>
+        <div class="tank-body">
+          <div class="tank-barrel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage-display">◄ STAGE 01 / 35 ►</div>
+</header>
+
+<!-- BRICK WALL -->
+<div class="brick-wall" id="brickWall"></div>
+
+<!-- STATS -->
+<div class="scoreboard">
+  <div class="score-item" style="--d:0">
+    <span class="score-num" id="kills">000</span>
+    <span class="score-label">TANKS DESTROYED</span>
+  </div>
+  <div class="score-item" style="--d:1">
+    <span class="score-num" id="stages">035</span>
+    <span class="score-label">TOTAL STAGES</span>
+  </div>
+  <div class="score-item" style="--d:2">
+    <span class="score-num" id="players">002</span>
+    <span class="score-label">PLAYERS</span>
+  </div>
+  <div class="score-item" style="--d:3">
+    <span class="score-num" id="hiscore">00000</span>
+    <span class="score-label">HI-SCORE</span>
+  </div>
+</div>
+
+<!-- POWER-UPS -->
+<div class="section-title">POWER-UPS</div>
+<div class="powerups">
+  <div class="powerup" style="--p:0">🌟<span class="powerup-label">STAR</span></div>
+  <div class="powerup" style="--p:1">💣<span class="powerup-label">BOMB</span></div>
+  <div class="powerup" style="--p:2">🛡️<span class="powerup-label">SHIELD</span></div>
+  <div class="powerup" style="--p:3">⏱️<span class="powerup-label">TIMER</span></div>
+  <div class="powerup" style="--p:4">❤️<span class="powerup-label">LIFE</span></div>
+</div>
+
+<!-- FEATURES -->
+<div class="section-title">GAME FEATURES</div>
+<div class="features">
+  <div class="feature-card">
+    <span class="feature-icon">🎮</span>
+    <div class="feature-title" style="color:var(--red)">2-PLAYER CO-OP</div>
+    <div class="feature-desc">Battle together with your buddy. Protect the eagle base at all costs!</div>
+  </div>
+  <div class="feature-card">
+    <span class="feature-icon">🗺️</span>
+    <div class="feature-title" style="color:var(--blue)">35 STAGES</div>
+    <div class="feature-desc">Navigate through brick walls, steel fortresses, and jungle terrains.</div>
+  </div>
+  <div class="feature-card">
+    <span class="feature-icon">💥</span>
+    <div class="feature-title" style="color:var(--green)">ENEMY VARIETY</div>
+    <div class="feature-desc">4 types of enemy tanks — from basic grunts to armored destroyers.</div>
+  </div>
+  <div class="feature-card">
+    <span class="feature-icon">🏆</span>
+    <div class="feature-title" style="color:var(--purple)">GLOBAL RANKING</div>
+    <div class="feature-desc">Climb the leaderboard. Show the world who the true tank commander is.</div>
+  </div>
+</div>
+
+<!-- PIXEL MAP -->
+<div class="section-title">BATTLE MAP</div>
+<div class="map-section">
+  <div class="pixel-map" id="pixelMap"></div>
+  <div style="font-family:'VT323',monospace; color:#555; font-size:1rem; margin-top:10px;">
+    STAGE 01 — DIFFICULTY: ★☆☆☆☆
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="section-title">TOP COMMANDERS</div>
+<div class="leaderboard">
+  <div class="lb-row" style="--r:0"><span class="lb-rank">🥇 01</span><span class="lb-name">TKR_MALAY</span><span class="lb-score">98,450</span></div>
+  <div class="lb-row" style="--r:1"><span class="lb-rank">🥈 02</span><span class="lb-name">SNIPR_99</span><span class="lb-score">87,200</span></div>
+  <div class="lb-row" style="--r:2"><span class="lb-rank">🥉 03</span><span class="lb-name">AZRI_TANK</span><span class="lb-score">76,800</span></div>
+  <div class="lb-row" style="--r:3"><span class="lb-rank">   04</span><span class="lb-name">WARZONE_X</span><span class="lb-score">65,100</span></div>
+  <div class="lb-row" style="--r:4"><span class="lb-rank">   05</span><span class="lb-name">PIXEL_KING</span><span class="lb-score">54,300</span></div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="insert-coin" style="margin-bottom:30px;">▼ READY PLAYER ONE ▼</div>
+  <button class="btn-play" onclick="handlePlay()">▶ PLAY NOW</button>
+  <button class="btn-secondary" onclick="handlePlay()">⚙ SETTINGS</button>
+  <div style="margin-top:40px; font-family:'VT323',monospace; font-size:1rem; color:#444; letter-spacing:3px;">
+    © 1990 TANK FORCE — ALL RIGHTS RESERVED
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  MADE WITH <span>♥</span> FOR CLASSIC GAMERS — JOHOR BAHRU, MY
+</footer>
+
+<div class="explosion" id="explosion"></div>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 8 + 'px';
+    cursor.style.top = e.clientY - 8 + 'px';
+  });
+
+  // Build brick wall
+  const wall = document.getElementById('brickWall');
+  for (let i = 0; i < 40; i++) {
+    const b = document.createElement('div');
+    b.className = 'brick';
+    b.style.setProperty('--i', i);
+    wall.appendChild(b);
+  }
+
+  // Build pixel map
+  const mapData = [
+    'BBBBBBBBBBBBBBB',
+    'B..BB....BB...B',
+    'B.BBB.SS.BBB..B',
+    'B..W..SS..W...B',
+    'B..W.....BB...B',
+    'B.BB..T..BB...B',
+    'B..BB....BB...B',
+    'B..SS.BB.SS...B',
+    'B....BXBB.....B',
+    'BBBBBBBBBBBBBBB',
+  ];
+  const cellTypes = { 'B':'brick','S':'steel','W':'water','T':'tree','X':'base','.':'empty' };
+  const pixelMap = document.getElementById('pixelMap');
+  mapData.forEach(row => {
+    row.split('').forEach(ch => {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + (cellTypes[ch] || 'empty');
+      pixelMap.appendChild(cell);
+    });
+  });
+
+  // Animate score counters
+  function animateCounter(el, target, duration, prefix='') {
+    let start = 0;
+    const step = target / (duration / 50);
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.textContent = prefix + Math.floor(start).toString().padStart(target.toString().length, '0');
+      if (start >= target) clearInterval(timer);
+    }, 50);
+  }
+
+  setTimeout(() => {
+    animateCounter(document.getElementById('kills'), 247);
+    animateCounter(document.getElementById('stages'), 35);
+    animateCounter(document.getElementById('players'), 2);
+    animateCounter(document.getElementById('hiscore'), 98450);
+  }, 500);
+
+  // Click explosion
+  document.addEventListener('click', e => {
+    const exp = document.getElementById('explosion');
+    exp.innerHTML = '';
+    exp.style.left = e.clientX + 'px';
+    exp.style.top = e.clientY + 'px';
+    const colors = ['#FFD700','#FF6B00','#FF2D2D','#00FF41','#00BFFF'];
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      const angle = (i / 12) * 360;
+      const dist = 30 + Math.random() * 40;
+      const tx = Math.cos(angle * Math.PI/180) * dist + 'px';
+      const ty = Math.sin(angle * Math.PI/180) * dist + 'px';
+      spark.style.setProperty('--tx', tx);
+      spark.style.setProperty('--ty', ty);
+      spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+      spark.style.left = '-3px';
+      spark.style.top = '-3px';
+      exp.appendChild(spark);
+    }
+    setTimeout(() => exp.innerHTML = '', 700);
+  });
+
+  // Play button
+  function handlePlay() {
+    const btn = document.querySelector('.btn-play');
+    btn.textContent = '▐ LOADING... ▌';
+    let dots = 0;
+    const t = setInterval(() => {
+      dots = (dots + 1) % 4;
+      btn.textContent = '▐ LOADING' + '.'.repeat(dots) + ' ▌';
+    }, 300);
+    setTimeout(() => {
+      clearInterval(t);
+      btn.textContent = '▶ PLAY NOW';
+    }, 3000);
+  }
+
+  // Stage counter animation
+  let stage = 1;
+  const stageEl = document.querySelector('.stage-display');
+  setInterval(() => {
+    stage = stage >= 35 ? 1 : stage + 1;
+    stageEl.textContent = `◄ STAGE ${stage.toString().padStart(2,'0')} / 35 ►`;
+  }, 2000);
+</script>
+</body>
+</html>
