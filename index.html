@@ -115,17 +115,17 @@ canvas { display:block; background:#111; image-rendering:pixelated; }
 <!-- WELCOME -->
 <div class="screen active" id="welcomeScreen">
   <div class="tank-row">🟡 🟠 🔴 🟢 🔵</div>
-  <div class="title-text">TANK<br>FORCE</div>
-  <div class="year-text">★ 1990 CLASSIC EDITION ★</div>
-  <div class="insert-coin">— INSERT COIN TO PLAY —</div>
+  <div class="title-text">TANK<br>KOIKMA</div>
+  <div class="year-text">★ BUAT KORANG ELAK STRESS ★</div>
+  <div class="insert-coin">— HAHAHAAHA —</div>
   <button class="btn-play" onclick="goToSelect()">▶ PLAY</button>
 </div>
 
 <!-- SELECT TANK -->
 <div class="screen" id="selectScreen">
-  <div class="select-title">— PILIH TANK KAMU —</div>
+  <div class="select-title">— PILIH TANK KORANG —</div>
   <div class="tanks-grid" id="tanksGrid"></div>
-  <button class="btn-confirm" id="btnConfirm" onclick="startGame()">▶ MULA GAME</button>
+  <button class="btn-confirm" id="btnConfirm" onclick="startGame()">▶ TEKAN SINI LA NAK START</button>
 </div>
 
 <!-- GAME -->
@@ -153,7 +153,7 @@ canvas { display:block; background:#111; image-rendering:pixelated; }
 
 <!-- GAME OVER -->
 <div class="game-over-overlay" id="gameOverOverlay">
-  <div class="go-title" id="goTitle">GAME OVER</div>
+  <div class="go-title" id="goTitle">DAH MATI. PEGI SAMBUNG KEJE</div>
   <div class="go-score" id="goScore">SCORE: 0</div>
   <button class="btn-r" onclick="restartGame()">▶ MAIN LAGI</button>
   <button class="btn-r dark" onclick="goToSelect()">◀ TUKAR TANK</button>
