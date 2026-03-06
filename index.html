@@ -3,851 +3,493 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TANK FORCE 1990 - Battle City Reborn</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<title>TANK FORCE 1990</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --yellow: #FFD700;
-    --orange: #FF6B00;
-    --red: #FF2D2D;
-    --green: #00FF41;
-    --blue: #00BFFF;
-    --purple: #C724FF;
-    --bg: #0a0a0a;
-    --tile: #1a1a1a;
-    --brick: #8B3A00;
-    --brick2: #C05A00;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--yellow);
-    font-family: 'Press Start 2P', monospace;
-    overflow-x: hidden;
-    cursor: none;
-  }
-
-  /* Custom cursor */
-  .cursor {
-    width: 16px; height: 16px;
-    background: var(--yellow);
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    image-rendering: pixelated;
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
-    transition: transform 0.1s;
-  }
-
-  /* Scanlines overlay */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.15) 2px,
-      rgba(0,0,0,0.15) 4px
-    );
-    pointer-events: none;
-    z-index: 1000;
-  }
-
-  /* ===== PIXEL GRID BACKGROUND ===== */
-  .pixel-bg {
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255,215,0,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,215,0,0.03) 1px, transparent 1px);
-    background-size: 32px 32px;
-    z-index: 0;
-  }
-
-  /* ===== HEADER / HERO ===== */
-  header {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    padding: 60px 20px 40px;
-    overflow: hidden;
-  }
-
-  .insert-coin {
-    font-family: 'VT323', monospace;
-    font-size: 1.4rem;
-    color: var(--green);
-    letter-spacing: 4px;
-    animation: blink 1s step-end infinite;
-    margin-bottom: 20px;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  .game-title {
-    font-size: clamp(2rem, 6vw, 4rem);
-    line-height: 1.4;
-    text-shadow:
-      4px 4px 0 var(--orange),
-      8px 8px 0 var(--red),
-      0 0 40px rgba(255,215,0,0.5);
-    animation: titlePulse 3s ease-in-out infinite;
-    margin-bottom: 10px;
-  }
-
-  @keyframes titlePulse {
-    0%, 100% { text-shadow: 4px 4px 0 var(--orange), 8px 8px 0 var(--red), 0 0 40px rgba(255,215,0,0.5); }
-    50% { text-shadow: 4px 4px 0 var(--orange), 8px 8px 0 var(--red), 0 0 80px rgba(255,215,0,0.9); }
-  }
-
-  .subtitle {
-    font-size: clamp(0.5rem, 2vw, 0.8rem);
-    color: var(--orange);
-    letter-spacing: 3px;
-    margin-bottom: 40px;
-  }
-
-  /* ===== PIXEL TANK SPRITE ===== */
-  .tank-hero {
-    display: flex;
-    justify-content: center;
-    gap: 60px;
-    margin: 40px 0;
-    flex-wrap: wrap;
-  }
-
-  .tank-sprite {
-    position: relative;
-    animation: tankFloat 2s ease-in-out infinite;
-  }
-
-  .tank-sprite.enemy {
-    animation: tankFloat 2s ease-in-out infinite reverse;
-    filter: hue-rotate(120deg);
-  }
-
-  @keyframes tankFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-  }
-
-  /* CSS Pixel Tank */
-  .pixel-tank {
-    image-rendering: pixelated;
-    width: 80px;
-    height: 80px;
-    position: relative;
-  }
-
-  .tank-body {
-    width: 48px;
-    height: 40px;
-    background: var(--yellow);
-    position: absolute;
-    left: 16px;
-    top: 20px;
-    box-shadow: inset -4px -4px 0 rgba(0,0,0,0.4);
-  }
-
-  .tank-body::before {
-    content: '';
-    width: 16px; height: 16px;
-    background: var(--orange);
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .tank-barrel {
-    width: 8px; height: 28px;
-    background: var(--yellow);
-    position: absolute;
-    left: 50%; top: -8px;
-    transform: translateX(-50%);
-    box-shadow: 2px 0 0 rgba(0,0,0,0.3);
-  }
-
-  .tank-track-l, .tank-track-r {
-    width: 12px; height: 48px;
-    background: repeating-linear-gradient(
-      0deg, #333 0px, #333 6px, #555 6px, #555 12px
-    );
-    position: absolute;
-    top: 16px;
-  }
-  .tank-track-l { left: 4px; }
-  .tank-track-r { right: 4px; }
-
-  .tank-wheel {
-    width: 10px; height: 10px;
-    background: #888;
-    border-radius: 50%;
-    position: absolute;
-  }
-
-  /* ===== BULLET ===== */
-  .bullet {
-    width: 6px; height: 12px;
-    background: var(--yellow);
-    position: absolute;
-    animation: shoot 0.5s linear infinite;
-  }
-
-  @keyframes shoot {
-    0% { top: -20px; opacity: 1; }
-    100% { top: -80px; opacity: 0; }
-  }
-
-  /* ===== BRICK WALL DIVIDER ===== */
-  .brick-wall {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 10px 0;
-    margin: 20px 0;
-    position: relative;
-    z-index: 5;
-  }
-
-  .brick {
-    width: 32px; height: 16px;
-    background: linear-gradient(135deg, var(--brick2), var(--brick));
-    border: 1px solid #5a2000;
-    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.15);
-    animation: shimmer 3s ease-in-out infinite;
-    animation-delay: calc(var(--i) * 0.1s);
-  }
-
-  @keyframes shimmer {
-    0%, 100% { background: linear-gradient(135deg, var(--brick2), var(--brick)); }
-    50% { background: linear-gradient(135deg, #E06000, #6B2800); }
-  }
-
-  /* ===== SCORE BOARD ===== */
-  .scoreboard {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
-    padding: 20px;
-    margin: 20px auto;
-    max-width: 900px;
-  }
-
-  .score-item {
-    text-align: center;
-    padding: 20px;
-    border: 3px solid var(--yellow);
-    background: rgba(255,215,0,0.05);
-    min-width: 160px;
-    position: relative;
-    animation: borderGlow 2s ease-in-out infinite;
-    animation-delay: calc(var(--d) * 0.5s);
-  }
-
-  @keyframes borderGlow {
-    0%, 100% { border-color: var(--yellow); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
-    50% { border-color: var(--orange); box-shadow: 0 0 20px rgba(255,107,0,0.6); }
-  }
-
-  .score-item::before, .score-item::after {
-    content: '★';
-    position: absolute;
-    top: -14px;
-    font-size: 1.2rem;
-    background: var(--bg);
-    padding: 0 4px;
-  }
-  .score-item::before { left: 10px; }
-  .score-item::after { right: 10px; }
-
-  .score-num {
-    font-size: 2rem;
-    color: var(--green);
-    display: block;
-    margin-bottom: 8px;
-    text-shadow: 0 0 10px var(--green);
-  }
-
-  .score-label {
-    font-size: 0.45rem;
-    color: var(--orange);
-    letter-spacing: 2px;
-  }
-
-  /* ===== FEATURES GRID ===== */
-  .section-title {
-    font-size: clamp(0.7rem, 2.5vw, 1.2rem);
-    text-align: center;
-    color: var(--blue);
-    margin: 50px 0 30px;
-    position: relative;
-    z-index: 10;
-    text-shadow: 0 0 20px var(--blue);
-  }
-
-  .section-title::before, .section-title::after {
-    content: '══ ';
-    color: var(--yellow);
-  }
-  .section-title::after { content: ' ══'; }
-
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    max-width: 1000px;
-    margin: 0 auto 60px;
-    padding: 0 20px;
-    position: relative;
-    z-index: 10;
-  }
-
-  .feature-card {
-    padding: 24px 20px;
-    border: 2px solid;
-    background: rgba(0,0,0,0.6);
-    position: relative;
-    transition: transform 0.15s, box-shadow 0.15s;
-    cursor: pointer;
-  }
-
-  .feature-card:hover {
-    transform: translate(-4px, -4px);
-  }
-
-  .feature-card:nth-child(1) { border-color: var(--red); }
-  .feature-card:nth-child(1):hover { box-shadow: 6px 6px 0 var(--red); }
-  .feature-card:nth-child(2) { border-color: var(--blue); }
-  .feature-card:nth-child(2):hover { box-shadow: 6px 6px 0 var(--blue); }
-  .feature-card:nth-child(3) { border-color: var(--green); }
-  .feature-card:nth-child(3):hover { box-shadow: 6px 6px 0 var(--green); }
-  .feature-card:nth-child(4) { border-color: var(--purple); }
-  .feature-card:nth-child(4):hover { box-shadow: 6px 6px 0 var(--purple); }
-
-  .feature-icon {
-    font-size: 2.5rem;
-    display: block;
-    margin-bottom: 16px;
-    image-rendering: pixelated;
-  }
-
-  .feature-title {
-    font-size: 0.55rem;
-    margin-bottom: 12px;
-    letter-spacing: 1px;
-  }
-
-  .feature-desc {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: #aaa;
-    line-height: 1.5;
-  }
-
-  /* ===== PIXEL MAP ===== */
-  .map-section {
-    position: relative;
-    z-index: 10;
-    max-width: 600px;
-    margin: 0 auto 60px;
-    padding: 0 20px;
-    text-align: center;
-  }
-
-  .pixel-map {
-    display: inline-grid;
-    grid-template-columns: repeat(15, 24px);
-    grid-template-rows: repeat(10, 24px);
-    gap: 2px;
-    margin: 20px auto;
-    border: 3px solid var(--yellow);
-    padding: 10px;
-    background: rgba(0,0,0,0.8);
-  }
-
-  .cell {
-    width: 24px; height: 24px;
-    image-rendering: pixelated;
-  }
-  .cell.empty { background: #111; }
-  .cell.brick { background: var(--brick); box-shadow: inset 1px 1px 0 var(--brick2); }
-  .cell.steel { background: #888; box-shadow: inset 1px 1px 0 #ccc, inset -1px -1px 0 #444; }
-  .cell.water { background: #003366; animation: waterAnim 1s step-end infinite; }
-  .cell.tree { background: #004400; }
-  .cell.base { background: var(--yellow); animation: basePulse 0.5s step-end infinite; }
-
-  @keyframes waterAnim {
-    0%, 100% { background: #003366; }
-    50% { background: #0055aa; }
-  }
-  @keyframes basePulse {
-    0%, 100% { background: var(--yellow); }
-    50% { background: var(--orange); }
-  }
-
-  /* ===== LEADERBOARD ===== */
-  .leaderboard {
-    max-width: 600px;
-    margin: 0 auto 60px;
-    padding: 0 20px;
-    position: relative;
-    z-index: 10;
-  }
-
-  .lb-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    margin-bottom: 6px;
-    border: 2px solid transparent;
-    font-family: 'VT323', monospace;
-    font-size: 1.3rem;
-    transition: all 0.2s;
-    animation: slideIn 0.5s ease both;
-    animation-delay: calc(var(--r) * 0.1s);
-  }
-
-  @keyframes slideIn {
-    from { transform: translateX(-30px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-
-  .lb-row:nth-child(1) { background: rgba(255,215,0,0.15); border-color: var(--yellow); }
-  .lb-row:nth-child(2) { background: rgba(192,192,192,0.1); border-color: #888; }
-  .lb-row:nth-child(3) { background: rgba(205,127,50,0.1); border-color: #cd7f32; }
-  .lb-row:nth-child(n+4) { background: rgba(255,255,255,0.03); border-color: #333; }
-
-  .lb-rank { color: var(--yellow); min-width: 40px; }
-  .lb-name { flex: 1; padding: 0 20px; color: var(--green); }
-  .lb-score { color: var(--orange); }
-
-  /* ===== CTA BUTTONS ===== */
-  .cta-section {
-    text-align: center;
-    padding: 40px 20px 80px;
-    position: relative;
-    z-index: 10;
-  }
-
-  .btn-play {
-    display: inline-block;
-    padding: 20px 48px;
-    background: var(--yellow);
-    color: #000;
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(0.7rem, 2vw, 1rem);
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    box-shadow: 6px 6px 0 var(--orange), 12px 12px 0 var(--red);
-    transition: all 0.1s;
-    animation: ctaPulse 1.5s ease-in-out infinite;
-    margin: 10px;
-  }
-
-  @keyframes ctaPulse {
-    0%, 100% { box-shadow: 6px 6px 0 var(--orange), 12px 12px 0 var(--red); }
-    50% { box-shadow: 8px 8px 0 var(--orange), 16px 16px 0 var(--red), 0 0 30px rgba(255,215,0,0.5); }
-  }
-
-  .btn-play:active {
-    transform: translate(6px, 6px);
-    box-shadow: none;
-  }
-
-  .btn-secondary {
-    display: inline-block;
-    padding: 20px 48px;
-    background: transparent;
-    color: var(--yellow);
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(0.7rem, 2vw, 1rem);
-    text-decoration: none;
-    border: 3px solid var(--yellow);
-    cursor: pointer;
-    position: relative;
-    box-shadow: 6px 6px 0 #555;
-    transition: all 0.1s;
-    margin: 10px;
-  }
-
-  .btn-secondary:hover {
-    background: rgba(255,215,0,0.1);
-    box-shadow: 8px 8px 0 var(--yellow);
-  }
-
-  /* ===== EXPLOSION PARTICLES ===== */
-  .explosion {
-    position: fixed;
-    pointer-events: none;
-    z-index: 500;
-  }
-
-  .spark {
-    position: absolute;
-    width: 6px; height: 6px;
-    background: var(--yellow);
-    animation: explode 0.6s ease-out both;
-  }
-
-  @keyframes explode {
-    0% { transform: translate(0,0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-  }
-
-  /* ===== FOOTER ===== */
-  footer {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    padding: 30px 20px;
-    border-top: 3px solid #333;
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: #555;
-  }
-
-  footer span { color: var(--red); }
-
-  /* ===== MOVING TANKS ===== */
-  .moving-tank {
-    position: fixed;
-    bottom: 20px;
-    font-size: 1.5rem;
-    animation: tankMove 8s linear infinite;
-    z-index: 5;
-    opacity: 0.3;
-    filter: hue-rotate(var(--hue));
-  }
-
-  @keyframes tankMove {
-    0% { left: -60px; }
-    100% { left: 110vw; }
-  }
-
-  /* POWER-UP BADGES */
-  .powerups {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 30px auto;
-    max-width: 700px;
-    position: relative;
-    z-index: 10;
-    padding: 0 20px;
-  }
-
-  .powerup {
-    width: 64px; height: 64px;
-    border: 3px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    position: relative;
-    animation: powerupBlink 1s step-end infinite;
-    animation-delay: calc(var(--p) * 0.2s);
-  }
-
-  .powerup:nth-child(1) { border-color: var(--red); }
-  .powerup:nth-child(2) { border-color: var(--blue); }
-  .powerup:nth-child(3) { border-color: var(--green); }
-  .powerup:nth-child(4) { border-color: var(--purple); }
-  .powerup:nth-child(5) { border-color: var(--yellow); }
-
-  @keyframes powerupBlink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(0.95); }
-  }
-
-  .powerup-label {
-    font-size: 0.3rem;
-    position: absolute;
-    bottom: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    color: #888;
-  }
-
-  /* STAGE COUNTER */
-  .stage-display {
-    text-align: center;
-    position: relative;
-    z-index: 10;
-    margin: 20px 0;
-    font-family: 'VT323', monospace;
-    font-size: 1.5rem;
-    color: var(--green);
-    letter-spacing: 6px;
-  }
-
-  /* Responsive */
-  @media (max-width: 600px) {
-    .scoreboard { gap: 16px; }
-    .score-item { min-width: 120px; padding: 14px; }
-    .pixel-map { grid-template-columns: repeat(15, 18px); grid-template-rows: repeat(10, 18px); }
-    .cell { width: 18px; height: 18px; }
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#000;
+  font-family:'Press Start 2P', monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  overflow:hidden;
+  color:#FFD700;
+}
+
+.screen { display:none; width:100vw; height:100vh; align-items:center; justify-content:center; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* WELCOME */
+#welcomeScreen { gap:28px; text-align:center; padding:20px; }
+
+.title-text {
+  font-size:clamp(2.5rem,10vw,5rem);
+  color:#FFD700;
+  text-shadow:5px 5px 0 #FF6B00, 10px 10px 0 #FF2D2D;
+  animation:pulse 1.5s ease-in-out infinite;
+  line-height:1.3;
+}
+@keyframes pulse {
+  0%,100%{text-shadow:5px 5px 0 #FF6B00,10px 10px 0 #FF2D2D;}
+  50%{text-shadow:5px 5px 0 #FF6B00,10px 10px 0 #FF2D2D,0 0 60px #FFD700;}
+}
+.year-text { font-size:clamp(0.5rem,2vw,0.8rem); color:#FF6B00; letter-spacing:6px; }
+.tank-row { font-size:2.5rem; animation:bounce 1s step-end infinite; }
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.insert-coin { font-size:clamp(0.45rem,1.5vw,0.65rem); color:#00FF41; animation:blink 0.8s step-end infinite; letter-spacing:2px; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.btn-play {
+  padding:18px 50px; background:#FFD700; color:#000;
+  font-family:'Press Start 2P',monospace; font-size:clamp(0.7rem,2vw,1rem);
+  border:none; cursor:pointer; letter-spacing:2px;
+  box-shadow:6px 6px 0 #FF6B00,12px 12px 0 #FF2D2D;
+  transition:all 0.1s;
+}
+.btn-play:active{transform:translate(6px,6px);box-shadow:none;}
+.btn-play:hover{background:#FFF176;}
+
+/* SELECT */
+#selectScreen { gap:20px; padding:20px; text-align:center; }
+.select-title { font-size:clamp(0.55rem,2vw,0.85rem); color:#00BFFF; letter-spacing:3px; }
+.tanks-grid { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; max-width:700px; }
+
+.tank-card {
+  width:110px; padding:16px 10px; border:3px solid #333; background:#111;
+  cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column;
+  align-items:center; gap:12px;
+}
+.tank-card:hover{transform:translate(-3px,-3px);}
+.tank-card.selected{border-color:#FFD700;background:#1a1a00;box-shadow:5px 5px 0 #FFD700;}
+.tank-name{font-size:0.38rem;color:#FFD700;letter-spacing:1px;text-align:center;}
+
+.btn-confirm {
+  padding:16px 40px; background:#00FF41; color:#000;
+  font-family:'Press Start 2P',monospace; font-size:clamp(0.5rem,1.5vw,0.7rem);
+  border:none; cursor:pointer; box-shadow:5px 5px 0 #008800;
+  transition:all 0.1s; display:none;
+}
+.btn-confirm.show{display:block;}
+.btn-confirm:active{transform:translate(5px,5px);box-shadow:none;}
+
+/* GAME */
+#gameScreen { flex-direction:column; gap:0; }
+.game-hud {
+  width:100%; max-width:600px; display:flex; justify-content:space-between;
+  align-items:center; padding:8px 12px; background:#111;
+  font-size:clamp(0.35rem,1vw,0.5rem); color:#FFD700; border-bottom:2px solid #333;
+}
+canvas { display:block; background:#111; image-rendering:pixelated; }
+
+.game-over-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+  align-items:center; justify-content:center; flex-direction:column; gap:20px; z-index:100;
+}
+.game-over-overlay.show{display:flex;}
+.go-title{font-size:clamp(1.5rem,6vw,3rem);color:#FF2D2D;animation:pulse 1s infinite;}
+.go-score{font-size:clamp(0.45rem,1.5vw,0.75rem);color:#FFD700;}
+.btn-r {
+  padding:14px 36px; background:#FFD700; color:#000;
+  font-family:'Press Start 2P',monospace; font-size:0.6rem;
+  border:none; cursor:pointer; box-shadow:5px 5px 0 #FF6B00; transition:all 0.1s;
+}
+.btn-r:active{transform:translate(5px,5px);box-shadow:none;}
+.btn-r.dark{background:#333;color:#FFD700;box-shadow:5px 5px 0 #111;}
+
+/* Mobile */
+.mobile-controls{display:none;gap:6px;padding:8px;background:#111;flex-wrap:wrap;justify-content:center;max-width:600px;width:100%;}
+@media(max-width:600px){.mobile-controls{display:flex;}}
+.mc-btn{
+  width:50px;height:50px;background:#222;border:2px solid #FFD700;
+  color:#FFD700;font-size:1rem;cursor:pointer;
+  font-family:'Press Start 2P',monospace;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.mc-btn:active{background:#FFD700;color:#000;}
 </style>
 </head>
 <body>
 
-<div class="pixel-bg"></div>
-<div class="cursor" id="cursor"></div>
+<!-- WELCOME -->
+<div class="screen active" id="welcomeScreen">
+  <div class="tank-row">🟡 🟠 🔴 🟢 🔵</div>
+  <div class="title-text">TANK<br>FORCE</div>
+  <div class="year-text">★ 1990 CLASSIC EDITION ★</div>
+  <div class="insert-coin">— INSERT COIN TO PLAY —</div>
+  <button class="btn-play" onclick="goToSelect()">▶ PLAY</button>
+</div>
 
-<!-- Moving tanks in background -->
-<div class="moving-tank" style="--hue:0deg; animation-delay:0s;">🚗</div>
-<div class="moving-tank" style="--hue:120deg; animation-delay:3s; bottom:60px;">🚗</div>
-<div class="moving-tank" style="--hue:240deg; animation-delay:5s; bottom:100px;">🚗</div>
+<!-- SELECT TANK -->
+<div class="screen" id="selectScreen">
+  <div class="select-title">— PILIH TANK KAMU —</div>
+  <div class="tanks-grid" id="tanksGrid"></div>
+  <button class="btn-confirm" id="btnConfirm" onclick="startGame()">▶ MULA GAME</button>
+</div>
 
-<!-- HEADER -->
-<header>
-  <div class="insert-coin">▶ INSERT COIN TO PLAY ◀</div>
-  <h1 class="game-title">TANK<br>FORCE</h1>
-  <div class="subtitle">★ 1990 BATTLE EDITION ★ REBORN ★</div>
-
-  <!-- Pixel Tanks -->
-  <div class="tank-hero">
-    <div class="tank-sprite">
-      <div class="pixel-tank">
-        <div class="tank-track-l"></div>
-        <div class="tank-track-r"></div>
-        <div class="tank-body">
-          <div class="tank-barrel"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VS text -->
-    <div style="font-size:clamp(1rem,4vw,2rem); color:var(--red); align-self:center; text-shadow: 3px 3px 0 #800;">VS</div>
-
-    <div class="tank-sprite enemy">
-      <div class="pixel-tank">
-        <div class="tank-track-l"></div>
-        <div class="tank-track-r"></div>
-        <div class="tank-body">
-          <div class="tank-barrel"></div>
-        </div>
-      </div>
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+  <div class="game-hud">
+    <span id="hudLives">❤️ x3</span>
+    <span id="hudStage" style="color:#00BFFF">STAGE 1</span>
+    <span id="hudScore" style="color:#00FF41">SCORE: 0</span>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <div class="mobile-controls">
+    <div style="display:grid;grid-template-columns:repeat(3,50px);gap:6px;">
+      <div></div>
+      <button class="mc-btn" id="mcUp">▲</button>
+      <div></div>
+      <button class="mc-btn" id="mcLeft">◄</button>
+      <button class="mc-btn" id="mcFire">💥</button>
+      <button class="mc-btn" id="mcRight">►</button>
+      <div></div>
+      <button class="mc-btn" id="mcDown">▼</button>
+      <div></div>
     </div>
   </div>
-
-  <div class="stage-display">◄ STAGE 01 / 35 ►</div>
-</header>
-
-<!-- BRICK WALL -->
-<div class="brick-wall" id="brickWall"></div>
-
-<!-- STATS -->
-<div class="scoreboard">
-  <div class="score-item" style="--d:0">
-    <span class="score-num" id="kills">000</span>
-    <span class="score-label">TANKS DESTROYED</span>
-  </div>
-  <div class="score-item" style="--d:1">
-    <span class="score-num" id="stages">035</span>
-    <span class="score-label">TOTAL STAGES</span>
-  </div>
-  <div class="score-item" style="--d:2">
-    <span class="score-num" id="players">002</span>
-    <span class="score-label">PLAYERS</span>
-  </div>
-  <div class="score-item" style="--d:3">
-    <span class="score-num" id="hiscore">00000</span>
-    <span class="score-label">HI-SCORE</span>
-  </div>
 </div>
 
-<!-- POWER-UPS -->
-<div class="section-title">POWER-UPS</div>
-<div class="powerups">
-  <div class="powerup" style="--p:0">🌟<span class="powerup-label">STAR</span></div>
-  <div class="powerup" style="--p:1">💣<span class="powerup-label">BOMB</span></div>
-  <div class="powerup" style="--p:2">🛡️<span class="powerup-label">SHIELD</span></div>
-  <div class="powerup" style="--p:3">⏱️<span class="powerup-label">TIMER</span></div>
-  <div class="powerup" style="--p:4">❤️<span class="powerup-label">LIFE</span></div>
+<!-- GAME OVER -->
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div class="go-title" id="goTitle">GAME OVER</div>
+  <div class="go-score" id="goScore">SCORE: 0</div>
+  <button class="btn-r" onclick="restartGame()">▶ MAIN LAGI</button>
+  <button class="btn-r dark" onclick="goToSelect()">◀ TUKAR TANK</button>
 </div>
-
-<!-- FEATURES -->
-<div class="section-title">GAME FEATURES</div>
-<div class="features">
-  <div class="feature-card">
-    <span class="feature-icon">🎮</span>
-    <div class="feature-title" style="color:var(--red)">2-PLAYER CO-OP</div>
-    <div class="feature-desc">Battle together with your buddy. Protect the eagle base at all costs!</div>
-  </div>
-  <div class="feature-card">
-    <span class="feature-icon">🗺️</span>
-    <div class="feature-title" style="color:var(--blue)">35 STAGES</div>
-    <div class="feature-desc">Navigate through brick walls, steel fortresses, and jungle terrains.</div>
-  </div>
-  <div class="feature-card">
-    <span class="feature-icon">💥</span>
-    <div class="feature-title" style="color:var(--green)">ENEMY VARIETY</div>
-    <div class="feature-desc">4 types of enemy tanks — from basic grunts to armored destroyers.</div>
-  </div>
-  <div class="feature-card">
-    <span class="feature-icon">🏆</span>
-    <div class="feature-title" style="color:var(--purple)">GLOBAL RANKING</div>
-    <div class="feature-desc">Climb the leaderboard. Show the world who the true tank commander is.</div>
-  </div>
-</div>
-
-<!-- PIXEL MAP -->
-<div class="section-title">BATTLE MAP</div>
-<div class="map-section">
-  <div class="pixel-map" id="pixelMap"></div>
-  <div style="font-family:'VT323',monospace; color:#555; font-size:1rem; margin-top:10px;">
-    STAGE 01 — DIFFICULTY: ★☆☆☆☆
-  </div>
-</div>
-
-<!-- LEADERBOARD -->
-<div class="section-title">TOP COMMANDERS</div>
-<div class="leaderboard">
-  <div class="lb-row" style="--r:0"><span class="lb-rank">🥇 01</span><span class="lb-name">TKR_MALAY</span><span class="lb-score">98,450</span></div>
-  <div class="lb-row" style="--r:1"><span class="lb-rank">🥈 02</span><span class="lb-name">SNIPR_99</span><span class="lb-score">87,200</span></div>
-  <div class="lb-row" style="--r:2"><span class="lb-rank">🥉 03</span><span class="lb-name">AZRI_TANK</span><span class="lb-score">76,800</span></div>
-  <div class="lb-row" style="--r:3"><span class="lb-rank">   04</span><span class="lb-name">WARZONE_X</span><span class="lb-score">65,100</span></div>
-  <div class="lb-row" style="--r:4"><span class="lb-rank">   05</span><span class="lb-name">PIXEL_KING</span><span class="lb-score">54,300</span></div>
-</div>
-
-<!-- CTA -->
-<div class="cta-section">
-  <div class="insert-coin" style="margin-bottom:30px;">▼ READY PLAYER ONE ▼</div>
-  <button class="btn-play" onclick="handlePlay()">▶ PLAY NOW</button>
-  <button class="btn-secondary" onclick="handlePlay()">⚙ SETTINGS</button>
-  <div style="margin-top:40px; font-family:'VT323',monospace; font-size:1rem; color:#444; letter-spacing:3px;">
-    © 1990 TANK FORCE — ALL RIGHTS RESERVED
-  </div>
-</div>
-
-<!-- FOOTER -->
-<footer>
-  MADE WITH <span>♥</span> FOR CLASSIC GAMERS — JOHOR BAHRU, MY
-</footer>
-
-<div class="explosion" id="explosion"></div>
 
 <script>
-  // Custom cursor
-  const cursor = document.getElementById('cursor');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX - 8 + 'px';
-    cursor.style.top = e.clientY - 8 + 'px';
+const TANKS = [
+  {name:'FAISAL',  color:'#FFD700', track:'#8B6914'},
+  {name:'FARUQAL', color:'#00BFFF', track:'#005A80'},
+  {name:'SYIDA',   color:'#FF69B4', track:'#8B0045'},
+  {name:'IKMAL',   color:'#00FF41', track:'#006618'},
+  {name:'IKA',     color:'#FF6B00', track:'#7A3200'},
+];
+
+let selectedTank = null;
+let gs = {};
+let keys = {};
+let animFrame;
+
+const TILE=32, COLS=15, ROWS=15;
+const EMPTY=0,BRICK=1,STEEL=2,BASE=3;
+
+const BASE_MAP = [
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,1,1,0,0,0,0,0,1,1,0,2,0,1,
+  1,0,1,0,0,1,0,1,0,0,1,0,0,0,1,
+  1,0,0,0,1,1,0,1,1,0,0,0,1,0,1,
+  1,0,2,0,0,0,0,0,0,0,2,0,1,0,1,
+  1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,
+  1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,
+  1,0,1,0,0,0,0,0,0,0,1,0,1,0,1,
+  1,0,0,0,0,1,0,1,0,0,0,0,0,0,1,
+  1,0,1,1,0,1,0,1,0,1,1,0,1,0,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,2,0,1,0,0,0,1,0,2,0,1,0,1,
+  1,0,0,0,0,0,3,0,0,0,0,0,0,0,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+];
+
+// Screen nav
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToSelect(){
+  selectedTank=null;
+  renderCards();
+  document.getElementById('btnConfirm').classList.remove('show');
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  showScreen('selectScreen');
+}
+
+function renderCards(){
+  const grid=document.getElementById('tanksGrid');
+  grid.innerHTML='';
+  TANKS.forEach((t,i)=>{
+    const c=document.createElement('div');
+    c.className='tank-card';
+    c.id='card_'+i;
+    c.innerHTML=`${tankSVG(t.color,t.track)}<div class="tank-name">${t.name}</div>`;
+    c.onclick=()=>selectTank(i);
+    grid.appendChild(c);
+  });
+}
+
+function tankSVG(color,track){
+  return `<svg width="48" height="56" viewBox="0 0 48 56" style="image-rendering:pixelated">
+    <rect x="0" y="14" width="10" height="36" fill="${track}"/>
+    <rect x="38" y="14" width="10" height="36" fill="${track}"/>
+    <line x1="5" y1="20" x2="5" y2="44" stroke="rgba(0,0,0,0.5)" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="43" y1="20" x2="43" y2="44" stroke="rgba(0,0,0,0.5)" stroke-width="2" stroke-dasharray="5,5"/>
+    <rect x="8" y="18" width="32" height="26" fill="${color}"/>
+    <rect x="19" y="26" width="10" height="10" fill="rgba(0,0,0,0.3)" rx="1"/>
+    <rect x="21" y="0" width="6" height="22" fill="${color}"/>
+  </svg>`;
+}
+
+function selectTank(i){
+  selectedTank=i;
+  document.querySelectorAll('.tank-card').forEach((c,j)=>c.classList.toggle('selected',i===j));
+  document.getElementById('btnConfirm').classList.add('show');
+}
+
+function startGame(){
+  if(selectedTank===null) return;
+  showScreen('gameScreen');
+  initGame();
+}
+
+// ===== GAME =====
+function initGame(){
+  const canvas=document.getElementById('gameCanvas');
+  canvas.width=COLS*TILE;
+  canvas.height=ROWS*TILE;
+  const scale=Math.min(window.innerWidth/(COLS*TILE),(window.innerHeight-100)/(ROWS*TILE),1);
+  canvas.style.width=(canvas.width*scale)+'px';
+  canvas.style.height=(canvas.height*scale)+'px';
+
+  const t=TANKS[selectedTank];
+  gs={
+    canvas,
+    ctx:canvas.getContext('2d'),
+    map:BASE_MAP.slice(),
+    player:{x:7*TILE,y:13*TILE,dir:0,color:t.color,track:t.track,speed:2,size:TILE-2},
+    bullets:[],
+    enemies:[],
+    lives:3,score:0,stage:1,
+    shootCD:0,invincible:0,dead:false,baseAlive:true,
+  };
+  spawnEnemies(3);
+  updateHUD();
+  cancelAnimationFrame(animFrame);
+  loop();
+}
+
+function spawnEnemies(n){
+  const spots=[{x:1,y:1},{x:7,y:1},{x:13,y:1},{x:1,y:7},{x:13,y:7}];
+  for(let i=0;i<n;i++){
+    const s=spots[i%spots.length];
+    gs.enemies.push({x:s.x*TILE,y:s.y*TILE,dir:2,speed:1,size:TILE-2,hp:1,moveT:0,shootT:60+Math.random()*100});
+  }
+}
+
+const DIRS=[{dx:0,dy:-1},{dx:1,dy:0},{dx:0,dy:1},{dx:-1,dy:0}];
+
+function canMove(x,y,size,map){
+  const m=2;
+  return [[x+m,y+m],[x+size-m,y+m],[x+m,y+size-m],[x+size-m,y+size-m]].every(([cx,cy])=>{
+    const col=Math.floor(cx/TILE), row=Math.floor(cy/TILE);
+    if(col<0||col>=COLS||row<0||row>=ROWS) return false;
+    const cell=map[row*COLS+col];
+    return cell===EMPTY||cell===BASE;
+  });
+}
+
+function fireBullet(ent,isPlayer){
+  const d=DIRS[ent.dir];
+  gs.bullets.push({
+    x:ent.x+ent.size/2-3+d.dx*(ent.size/2),
+    y:ent.y+ent.size/2-3+d.dy*(ent.size/2),
+    dx:d.dx*7,dy:d.dy*7,isPlayer,alive:true
+  });
+}
+
+function update(){
+  if(gs.dead) return;
+  const p=gs.player;
+  if(gs.shootCD>0) gs.shootCD--;
+  if(gs.invincible>0) gs.invincible--;
+
+  // Player move
+  let mv=false;
+  if(keys['ArrowUp']||keys['w']){p.dir=0;mv=true;}
+  else if(keys['ArrowRight']||keys['d']){p.dir=1;mv=true;}
+  else if(keys['ArrowDown']||keys['s']){p.dir=2;mv=true;}
+  else if(keys['ArrowLeft']||keys['a']){p.dir=3;mv=true;}
+  if(mv){const d=DIRS[p.dir];const nx=p.x+d.dx*p.speed,ny=p.y+d.dy*p.speed;if(canMove(nx,ny,p.size,gs.map)){p.x=nx;p.y=ny;}}
+
+  // Player shoot
+  if((keys[' ']||keys['Enter'])&&gs.shootCD===0){fireBullet(p,true);gs.shootCD=18;}
+
+  // Enemies
+  gs.enemies.forEach(e=>{
+    e.moveT++;e.shootT--;
+    if(e.moveT>50){e.dir=Math.floor(Math.random()*4);e.moveT=0;}
+    const d=DIRS[e.dir];
+    const nx=e.x+d.dx*e.speed,ny=e.y+d.dy*e.speed;
+    if(canMove(nx,ny,e.size,gs.map)){e.x=nx;e.y=ny;}else{e.dir=Math.floor(Math.random()*4);e.moveT=0;}
+    if(e.shootT<=0){fireBullet(e,false);e.shootT=70+Math.random()*90;}
   });
 
-  // Build brick wall
-  const wall = document.getElementById('brickWall');
-  for (let i = 0; i < 40; i++) {
-    const b = document.createElement('div');
-    b.className = 'brick';
-    b.style.setProperty('--i', i);
-    wall.appendChild(b);
-  }
+  // Bullets
+  gs.bullets=gs.bullets.filter(b=>{
+    b.x+=b.dx; b.y+=b.dy;
+    if(b.x<0||b.x>COLS*TILE||b.y<0||b.y>ROWS*TILE) return false;
 
-  // Build pixel map
-  const mapData = [
-    'BBBBBBBBBBBBBBB',
-    'B..BB....BB...B',
-    'B.BBB.SS.BBB..B',
-    'B..W..SS..W...B',
-    'B..W.....BB...B',
-    'B.BB..T..BB...B',
-    'B..BB....BB...B',
-    'B..SS.BB.SS...B',
-    'B....BXBB.....B',
-    'BBBBBBBBBBBBBBB',
-  ];
-  const cellTypes = { 'B':'brick','S':'steel','W':'water','T':'tree','X':'base','.':'empty' };
-  const pixelMap = document.getElementById('pixelMap');
-  mapData.forEach(row => {
-    row.split('').forEach(ch => {
-      const cell = document.createElement('div');
-      cell.className = 'cell ' + (cellTypes[ch] || 'empty');
-      pixelMap.appendChild(cell);
-    });
-  });
-
-  // Animate score counters
-  function animateCounter(el, target, duration, prefix='') {
-    let start = 0;
-    const step = target / (duration / 50);
-    const timer = setInterval(() => {
-      start = Math.min(start + step, target);
-      el.textContent = prefix + Math.floor(start).toString().padStart(target.toString().length, '0');
-      if (start >= target) clearInterval(timer);
-    }, 50);
-  }
-
-  setTimeout(() => {
-    animateCounter(document.getElementById('kills'), 247);
-    animateCounter(document.getElementById('stages'), 35);
-    animateCounter(document.getElementById('players'), 2);
-    animateCounter(document.getElementById('hiscore'), 98450);
-  }, 500);
-
-  // Click explosion
-  document.addEventListener('click', e => {
-    const exp = document.getElementById('explosion');
-    exp.innerHTML = '';
-    exp.style.left = e.clientX + 'px';
-    exp.style.top = e.clientY + 'px';
-    const colors = ['#FFD700','#FF6B00','#FF2D2D','#00FF41','#00BFFF'];
-    for (let i = 0; i < 12; i++) {
-      const spark = document.createElement('div');
-      spark.className = 'spark';
-      const angle = (i / 12) * 360;
-      const dist = 30 + Math.random() * 40;
-      const tx = Math.cos(angle * Math.PI/180) * dist + 'px';
-      const ty = Math.sin(angle * Math.PI/180) * dist + 'px';
-      spark.style.setProperty('--tx', tx);
-      spark.style.setProperty('--ty', ty);
-      spark.style.background = colors[Math.floor(Math.random() * colors.length)];
-      spark.style.left = '-3px';
-      spark.style.top = '-3px';
-      exp.appendChild(spark);
+    // Wall check
+    const col=Math.floor((b.x+3)/TILE),row=Math.floor((b.y+3)/TILE);
+    if(col>=0&&col<COLS&&row>=0&&row<ROWS){
+      const cell=gs.map[row*COLS+col];
+      if(cell===BRICK){gs.map[row*COLS+col]=EMPTY;return false;}
+      if(cell===STEEL) return false;
+      if(cell===BASE){gs.map[row*COLS+col]=EMPTY;if(!b.isPlayer){gameOver();}return false;}
     }
-    setTimeout(() => exp.innerHTML = '', 700);
+
+    // Hit enemy
+    if(b.isPlayer){
+      for(let i=gs.enemies.length-1;i>=0;i--){
+        const e=gs.enemies[i];
+        if(b.x>e.x&&b.x<e.x+e.size&&b.y>e.y&&b.y<e.y+e.size){
+          e.hp--;
+          if(e.hp<=0){gs.enemies.splice(i,1);gs.score+=100;updateHUD();}
+          if(gs.enemies.length===0) nextStage();
+          return false;
+        }
+      }
+    }
+
+    // Hit player
+    if(!b.isPlayer&&gs.invincible===0){
+      if(b.x>p.x&&b.x<p.x+p.size&&b.y>p.y&&b.y<p.y+p.size){
+        gs.lives--;updateHUD();
+        if(gs.lives<=0){gameOver();}
+        else{p.x=7*TILE;p.y=13*TILE;gs.invincible=120;}
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function nextStage(){
+  gs.stage++;
+  if(gs.stage>5){
+    gs.dead=true;
+    document.getElementById('goTitle').textContent='YOU WIN! 🏆';
+    document.getElementById('goTitle').style.color='#FFD700';
+    document.getElementById('goScore').textContent='SCORE: '+gs.score;
+    document.getElementById('gameOverOverlay').classList.add('show');
+    return;
+  }
+  gs.map=BASE_MAP.slice();
+  gs.player.x=7*TILE;gs.player.y=13*TILE;
+  gs.enemies=[];
+  spawnEnemies(Math.min(gs.stage+2,5));
+  updateHUD();
+}
+
+function gameOver(){
+  gs.dead=true;
+  document.getElementById('goTitle').textContent='GAME OVER';
+  document.getElementById('goTitle').style.color='#FF2D2D';
+  document.getElementById('goScore').textContent='SCORE: '+gs.score;
+  document.getElementById('gameOverOverlay').classList.add('show');
+}
+
+function restartGame(){
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  initGame();
+}
+
+function updateHUD(){
+  document.getElementById('hudLives').textContent='❤️ x'+gs.lives;
+  document.getElementById('hudStage').textContent='STAGE '+gs.stage;
+  document.getElementById('hudScore').textContent='SCORE: '+gs.score;
+}
+
+// ===== RENDER =====
+function render(){
+  const {ctx,canvas,map,player:p,bullets,enemies,invincible}=gs;
+  ctx.fillStyle='#111';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Map
+  map.forEach((cell,i)=>{
+    if(!cell) return;
+    const col=i%COLS,row=Math.floor(i/COLS);
+    const x=col*TILE,y=row*TILE;
+    if(cell===BRICK){
+      ctx.fillStyle='#8B3A00';ctx.fillRect(x,y,TILE,TILE);
+      ctx.fillStyle='#C05A00';
+      ctx.fillRect(x+2,y+2,14,6);ctx.fillRect(x+18,y+2,12,6);
+      ctx.fillRect(x+2,y+10,8,6);ctx.fillRect(x+12,y+10,16,6);
+      ctx.fillRect(x+2,y+18,14,6);ctx.fillRect(x+18,y+18,12,6);
+      ctx.fillRect(x+2,y+26,8,6);ctx.fillRect(x+12,y+26,16,6);
+    } else if(cell===STEEL){
+      ctx.fillStyle='#666';ctx.fillRect(x,y,TILE,TILE);
+      ctx.fillStyle='#aaa';ctx.fillRect(x+3,y+3,10,10);ctx.fillRect(x+TILE-13,y+TILE-13,10,10);
+      ctx.strokeStyle='#888';ctx.lineWidth=1;ctx.strokeRect(x+1,y+1,TILE-2,TILE-2);
+    } else if(cell===BASE){
+      ctx.fillStyle='#FFD700';ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
+      ctx.fillStyle='#FF6B00';ctx.fillRect(x+8,y+8,TILE-16,TILE-16);
+      ctx.fillStyle='#000';
+      ctx.font='14px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('★',x+TILE/2,y+TILE/2);
+    }
   });
 
-  // Play button
-  function handlePlay() {
-    const btn = document.querySelector('.btn-play');
-    btn.textContent = '▐ LOADING... ▌';
-    let dots = 0;
-    const t = setInterval(() => {
-      dots = (dots + 1) % 4;
-      btn.textContent = '▐ LOADING' + '.'.repeat(dots) + ' ▌';
-    }, 300);
-    setTimeout(() => {
-      clearInterval(t);
-      btn.textContent = '▶ PLAY NOW';
-    }, 3000);
+  // Enemies
+  enemies.forEach(e=>drawTank(ctx,e.x,e.y,e.dir,'#FF2D2D','#6B0000'));
+
+  // Player (blink when invincible)
+  if(invincible===0||Math.floor(invincible/8)%2===0){
+    drawTank(ctx,p.x,p.y,p.dir,p.color,p.track);
   }
 
-  // Stage counter animation
-  let stage = 1;
-  const stageEl = document.querySelector('.stage-display');
-  setInterval(() => {
-    stage = stage >= 35 ? 1 : stage + 1;
-    stageEl.textContent = `◄ STAGE ${stage.toString().padStart(2,'0')} / 35 ►`;
-  }, 2000);
+  // Bullets
+  bullets.forEach(b=>{
+    ctx.fillStyle=b.isPlayer?'#FFFFFF':'#FF6666';
+    ctx.fillRect(b.x-2,b.y-5,5,10);
+  });
+}
+
+function drawTank(ctx,x,y,dir,color,track){
+  ctx.save();
+  ctx.translate(x+TILE/2,y+TILE/2);
+  ctx.rotate([0,Math.PI/2,Math.PI,-Math.PI/2][dir]);
+  const h=TILE-2,hh=h/2;
+
+  ctx.fillStyle=track;
+  ctx.fillRect(-hh,-hh,9,h);
+  ctx.fillRect(hh-9,-hh,9,h);
+
+  ctx.fillStyle=color;
+  ctx.fillRect(-hh+10,-hh+4,h-20,h-8);
+
+  // Barrel
+  ctx.fillRect(-3,-hh-8,6,hh+4);
+
+  // Center turret
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath();ctx.arc(0,2,5,0,Math.PI*2);ctx.fill();
+
+  ctx.restore();
+}
+
+function loop(){
+  update();render();
+  animFrame=requestAnimationFrame(loop);
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{keys[e.key]=true;if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();});
+document.addEventListener('keyup',e=>{keys[e.key]=false;});
+
+// Mobile
+function mb(id,k){
+  const el=document.getElementById(id);
+  el.addEventListener('touchstart',e=>{e.preventDefault();keys[k]=true},{passive:false});
+  el.addEventListener('touchend',e=>{e.preventDefault();keys[k]=false},{passive:false});
+  el.addEventListener('mousedown',()=>keys[k]=true);
+  el.addEventListener('mouseup',()=>keys[k]=false);
+}
+mb('mcUp','ArrowUp');mb('mcDown','ArrowDown');mb('mcLeft','ArrowLeft');mb('mcRight','ArrowRight');mb('mcFire',' ');
 </script>
 </body>
 </html>
